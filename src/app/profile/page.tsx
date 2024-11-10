@@ -21,22 +21,35 @@ const ProfilePage = async () => {
     user = await wixClient.members.getCurrentMember({
       fieldsets: [members.Set.FULL],
     });
+
+    // Check if the user is logged in and has the necessary permission
+    if (!user.member?.contactId) {
+      return <div className="">Not logged in!</div>;
+    }
   } catch (error) {
+    if (
+      (error as any)?.details?.applicationError?.code === "PERMISSION_DENIED"
+    ) {
+      console.error("Permission Denied:", error);
+      return <div>You do not have permission to view this page.</div>;
+    }
     console.error("Error fetching user data:", error);
     return <div>Error fetching user data. Please try again later.</div>;
-  }
-
-  if (!user.member?.contactId) {
-    return <div className="">Not logged in!</div>;
   }
 
   try {
     orderRes = await wixClient.orders.searchOrders({
       search: {
-        filter: { "buyerInfo.contactId": { $eq: user.member?.contactId } },
+        filter: { "buyerInfo.contactId": { $eq: user.member.contactId } },
       },
     });
   } catch (error) {
+    if (
+      (error as any).details?.applicationError?.code === "PERMISSION_DENIED"
+    ) {
+      console.error("Permission Denied when fetching orders:", error);
+      return <div>You do not have permission to view your orders.</div>;
+    }
     console.error("Error fetching orders:", error);
     return <div>Error fetching orders. Please try again later.</div>;
   }
