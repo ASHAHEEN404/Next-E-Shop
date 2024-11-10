@@ -6,21 +6,40 @@ import Link from "next/link";
 import { format } from "timeago.js";
 
 const ProfilePage = async () => {
-  const wixClient = await wixClientServer();
+  let wixClient;
+  let user;
+  let orderRes;
 
-  const user = await wixClient.members.getCurrentMember({
-    fieldsets: [members.Set.FULL],
-  });
+  try {
+    wixClient = await wixClientServer();
+  } catch (error) {
+    console.error("Error initializing wixClient:", error);
+    return <div>Error loading profile. Please try again later.</div>;
+  }
+
+  try {
+    user = await wixClient.members.getCurrentMember({
+      fieldsets: [members.Set.FULL],
+    });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return <div>Error fetching user data. Please try again later.</div>;
+  }
 
   if (!user.member?.contactId) {
     return <div className="">Not logged in!</div>;
   }
 
-  const orderRes = await wixClient.orders.searchOrders({
-    search: {
-      filter: { "buyerInfo.contactId": { $eq: user.member?.contactId } },
-    },
-  });
+  try {
+    orderRes = await wixClient.orders.searchOrders({
+      search: {
+        filter: { "buyerInfo.contactId": { $eq: user.member?.contactId } },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return <div>Error fetching orders. Please try again later.</div>;
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-24 md:h-[calc(100vh-180px)] items-center px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
